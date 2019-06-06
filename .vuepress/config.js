@@ -21,7 +21,15 @@ module.exports = {
       }     
     ]
   },
-  ga: "UA-103394074-1",
-  dest: "dist"
+  dest: "dist",
+  plugins: [
+    '@vuepress/medium-zoom',
+    [ 
+      '@vuepress/google-analytics',
+      {
+        'ga': 'UA-103394074-1'
+      }
+    ]  
+  ] 
 }
 

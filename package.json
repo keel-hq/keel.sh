@@ -1,9 +1,11 @@
 {
   "devDependencies": {
+    "@vuepress/plugin-google-analytics": "^1.0.0-beta.2",
+    "@vuepress/plugin-medium-zoom": "^1.0.0-beta.2",
     "vuepress": "^1.0.0-alpha.48"
   },
-   "scripts": {
-    "dev": "vuepress dev",    
+  "scripts": {
+    "dev": "vuepress dev",
     "build": "vuepress build"
   }
 }
