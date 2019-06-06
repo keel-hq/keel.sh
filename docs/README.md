@@ -109,6 +109,83 @@ To uninstall/delete the `keel` deployment:
 helm delete keel
 ```
 
+### Environment variables
+
+```bash
+# Google Cloud configuration
+PROJECT_ID=<project ID> - Enable GCR with pub/sub support
+PUBSUB - Set to '1' or 'true' to enable GCR pubsub
+
+# Database location (optional, although if you want stats and audit logs to persist, set it) 
+XDG_DATA_HOME=/data
+
+# Authentication
+BASIC_AUTH_USER=<admin username>
+BASIC_AUTH_PASSWORD=<admin password>
+AUTHENTICATED_WEBHOOKS=<true/false>
+TOKEN_SECRET=<optional JWT signing secret, auto generated if empty>
+
+## Helm configuration
+HELM_PROVIDER - set to "1" to enable Tiller
+TILLER_ADDRESS - 
+
+# Enable AWS ECR
+AWS_ACCESS_KEY_ID=<access key ID>
+AWS_SECRET_ACCESS_KEY=<access key>
+AWS_REGION=<region>
+
+# Enable outgoing webhooks
+WEBHOOK_ENDPOINT=<https://your-endpoint>
+
+# Enable mattermost endpoint
+MATTERMOST_ENDPOINT=<mattermost incoming webhook endpoint>
+
+# Slack configuration
+SLACK_TOKEN
+
+SLACK_CHANNELS=<slack channel, defaults to "general">
+SLACK_APPROVALS_CHANNEL=<slack approvals channel, defaults to "general">
+SLACK_BOT_NAME=<slack bot name, defaults to "keel">
+
+# Enable hipchat approvials and notification
+HIPCHAT_TOKEN
+HIPCHAT_CHANNELS
+HIPCHAT_APPROVALS_CHANNEL
+HIPCHAT_APPROVALS_BOT_NAME
+HIPCHAT_APPROVALS_USER_NAME
+HIPCHAT_APPROVALS_PASSWORT
+
+# System wide notification level (webhooks, chat)
+NOTIFICATION_LEVEL="info"
+# Enable insecure registries
+INSECURE_REGISTRY="true"
+```
+
+### Enabling admin dashboard
+
+To enable admin dashboard, you will need to:
+
+1. Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD environment variables
+2. Create a service so you can access it. Keel UI and API are accessible on port 9300 by default.
+
+To access Keel admin dashboard without configuring public IP, you can use [webhookrelay.com](https://webhookrelay.com) tunnels. There's a default template to generate Keel configuration with tunnels enabled. First get a [token](https://my.webhookrelay.com/tunnels) & [tunnel](https://my.webhookrelay.com/tunnels), then deploy through [sunstone.dev](https://about.sunstone.dev):
+
+```bash
+kubectl apply -f https://sunstone.dev/keel?namespace=default&username=admin&password=admin&relay_key=TOKEN_KEY&relay_secret=TOKEN_SECRET&relay_tunnel=TUNNEL_NAME&tag=latest
+```
+
+Then, access it through the tunnel address such as your-subdomain.webrelay.io:
+
+![Keel Web UI](/img/keel_ui.png)
+
+Admin dashboard allows you to:
+
+* Enable/disable automated updates
+* Set/change policies
+* Enable/disable polling
+* View all tracked images
+* See audit logs (updates, approvals)
+* Last 30 days statistics
 
 ## Policies
 
@@ -330,7 +407,7 @@ keel.sh/policy=force # add this to enable updates of non-semver tags
 keel.sh/trigger=poll
 ```
 
-To specify custom polling schedule, check [cron expression format]({{ page.url }}#cron-expression-format)
+To specify custom polling schedule, use *keel.sh/pollSchedule: "@every 10m"* annotation. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". 
 
 > **Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
 
@@ -462,7 +539,10 @@ If you are not using versioning and pushing to the same tag, you should modify y
 
 Current consensus on a best way to "force" update Helm releases is by modifying your pod spec template by adding:
 
-**date/deploy-date: &lbrace;&lbrace; now | quote &rbrace;&rbrace;**
+
+```
+date/deploy-date: &lbrace;&lbrace; now | quote &rbrace;&rbrace;
+``
 
 annotation. This way Helm's Tiller will always detect a change in your template and Kubernetes will start a rolling update on the resource.
 
@@ -638,6 +718,39 @@ Entry                  | Description                                | Equivalent
 @daily (or @midnight)  | Run once a day, midnight                   | `0 0 0 * * *`
 @hourly                | Run once an hour, beginning of hour        | `0 0 * * * *`
 
+Example deployment file with enabled polling:
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: wd-ds
+  namespace: default
+  labels: 
+      name: "wd"
+  annotations:
+      keel.sh/policy: minor     # update policy (available: patch, minor, major, all, force)
+      keel.sh/trigger: poll     # enable active repository checking (webhooks and GCR would still work)
+      keel.sh/pollSchedule: "@every 1m"
+spec:
+  selector:
+    matchLabels:
+      name: wd-ds
+  template:
+    metadata:
+      labels:
+        name: wd-ds
+    spec:      
+      containers:
+      - name: wd-ds
+        image: karolisr/webhook-demo:master
+        imagePullPolicy: Always            
+        name: wd
+        command: ["/bin/webhook-demo"]
+        ports:
+          - containerPort: 8090
+```
+
 
 ### Polling with AWS ECR
 
@@ -673,7 +786,7 @@ Users can specify on deployments and Helm charts how many approvals do they have
 * __non-blocking__ - multiple deployments/helm releases can be queued for approvals, the ones without specified approvals will be auto updated.
 * __extensible__ - current implementation focuses on Slack but additional approval collection mechanisms are trivial to implement.
 * __out of the box Slack integration__ - the only needed Keel configuration is Slack auth token, Keel will start requesting approvals and users will be able to approve.
-* __stateful__ - uses [github.com/rusenask/k8s-kv](https://github.com/rusenask/k8s-kv) for persistence so even after updating itself (restarting) it will retain existing info.
+* __stateful__ - uses SQLite for persistence so even after updating itself (restarting) it will retain existing info.
 * __self cleaning__ - expired approvals will be removed after deadline is exceeded. 
 
 ### Enabling approvals
