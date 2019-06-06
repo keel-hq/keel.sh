@@ -3,7 +3,8 @@ module.exports = {
   description: 'Kubernetes Operator to automate Helm, DaemonSet, StatefulSet & Deployment updates',
   themeConfig: {
     logo: '/img/logo_small.png',
-    repo: 'keel-hq/keel.sh',
+    repo: 'keel-hq/keel',
+    docsRepo: 'keel-hq/keel.sh',
     // defaults to false, set to true to enable
     editLinks: true,
     // custom text for edit link. Defaults to "Edit this page"
@@ -24,7 +25,16 @@ module.exports = {
   dest: "dist",
   plugins: [
     '@vuepress/medium-zoom',
-    '@vuepress/pwa',
+    // '@vuepress/pwa',
+    [
+    '@vuepress/pwa', {
+            serviceWorker: true,
+            updatePopup: {
+              message: "New content is available.",
+              buttonText: "Refresh"
+            }
+          }
+    ],
     [ 
       '@vuepress/google-analytics',
       {
