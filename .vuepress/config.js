@@ -3,6 +3,11 @@ module.exports = {
   description: 'Kubernetes Operator to automate Helm, DaemonSet, StatefulSet & Deployment updates',
   themeConfig: {
     logo: '/img/logo_small.png',
+    repo: 'keel-hq/keel.sh',
+    // defaults to false, set to true to enable
+    editLinks: true,
+    // custom text for edit link. Defaults to "Edit this page"
+    editLinkText: 'Help us improve this page!',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/docs/' },
@@ -13,8 +18,7 @@ module.exports = {
           { text: 'Templating', link: 'https://about.sunstone.dev' },
           { text: 'Webhooks & Tunneling', link: 'https://webhookrelay.com' }
         ]
-      },
-      { text: 'GitHub', link: 'https://github.com/keel-hq/keel' },
+      }     
     ]
   },
   ga: "UA-103394074-1",
