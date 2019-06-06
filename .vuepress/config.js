@@ -24,6 +24,7 @@ module.exports = {
   dest: "dist",
   plugins: [
     '@vuepress/medium-zoom',
+    '@vuepress/pwa',
     [ 
       '@vuepress/google-analytics',
       {

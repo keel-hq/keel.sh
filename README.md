@@ -13,6 +13,7 @@ features:
 footer: Apache 2 Licensed | Copyright © 2017-present AppScension Ltd
 ---
 
+![Keel high level diagram](/img/keel_high_level.png)
 
 ## Easy as 1, 2, 3
 
@@ -32,7 +33,6 @@ metadata:
     keel.sh/policy: minor # <-- policy name according to https://semver.org/
     keel.sh/trigger: poll # <-- actively query registry, otherwise defaults to webhooks
 spec:
-  replicas: 1
   template:
     metadata:
       name: wd

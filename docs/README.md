@@ -33,12 +33,9 @@ Keel doesn't need a database. Keel doesn't need persistent disk. It gets all req
 
 > We assume that your kubectl can access Kubernetes environment. If you have multiple environments, you should use **kubectl config use-context [your cluster]** command.
 
-Configuration sample files are available in Keel repository on GitHub [here](https://github.com/rusenask/keel/tree/master/hack) and [here](https://github.com/keel-hq/keel/tree/master/deployment).
-
-
 ### Deploying with kubectl 
 
-You can find sample deployments in https://github.com/keel-hq/keel repository under `deployments` directory [here](https://github.com/keel-hq/keel/tree/master/deployment). You can either clone whole repository or just download that file. Edit settings (depending on your environment whether you want to use [Google Container Registry](https://cloud.google.com/container-registry/) PUBSUB) or notifications and create it. All configuration is done through environment variables.
+You can find sample deployments in https://github.com/keel-hq/keel repository under [deployments directory](https://github.com/keel-hq/keel/tree/master/deployment). You can either clone whole repository or just download that file. Edit settings (depending on your environment whether you want to use [Google Container Registry](https://cloud.google.com/container-registry/) PUBSUB) or notifications and create it. All configuration is done through environment variables.
 
 You can also use [sunstone.dev](https://about.sunstone.dev) to generate a template with latest semver version or use `latest` tag:
 
@@ -1048,10 +1045,11 @@ First, get a Slack token, info about that can be found in the [docs](https://get
 Keel will be sending messages when deployment updates succeed or fail.
 
 
-### Hipchat notifications
+### HipChat notifications
 
-Coming soon...
-
+::: warning
+HipChat documentation is missing, if you are using it, please add some examples. 
+:::
 
 ### Mattermost notifications
 
@@ -1065,7 +1063,7 @@ docker run --name mattermost-preview -d --publish 8065:8065 mattermost/mattermos
 
 Server should be reachable on: http://localhost:8065/
 
-Now, enable "incoming webhooks" in your Mattermost server. Documentation can be found [here](https://docs.mattermost.com/developer/webhooks-incoming.html):
+Now, enable "incoming webhooks" in your Mattermost server. Documentation can be found [in the incoming webhooks section](https://docs.mattermost.com/developer/webhooks-incoming.html):
 
 ![Mattermost webhooks](/img/docs/mattermost-webhooks.png)
 
