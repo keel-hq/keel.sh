@@ -16,7 +16,7 @@ footer: Apache 2 Licensed | Copyright © 2017-present AppScension Ltd
 
 ## Easy as 1, 2, 3
 
-1. Deploy Keel into your cluster, installation instructions can be found [TODO]
+1. Deploy Keel into your cluster, installation instructions can be found [here](/docs/#installation).
 
 2. Modify your deployment manifest with policy annotations:
 
@@ -48,15 +48,17 @@ spec:
             - containerPort: 8090
 ```
 
-> TODO: link to policies
+> Additional policies such as wildcard, regex and force are available, read more [here](/docs/#policies).
 
 That's it, third step is automated, Keel will do it. Once you deploy it, Keel will be looking for new versions and automatically updating your resource once a new image is available.
 
-## Admin Dashboard
+## Admin Dashboard (only available with 'latest' image)
 
 Keel has an optional, easy to use web UI for quick policy updates, approval management and audit logs:
 
 ![Keel Web UI](/img/keel_ui.png)
+
+See how to enable [admin dashboard here](/docs/#enabling-admin-dashboard).
 
 ## Policy Driven Updates
 
@@ -72,7 +74,13 @@ Available policies:
 -  **force**: force update even if tag is not semver, ie: `latest`, optional label: **keel.sh/match-tag=true** which will enforce that only the same tag will trigger force update.
 -  **glob**: use wildcards to match versions, example:
 
+Policy configuration docs can be [viewed here](/docs/#policies).
 
 ## Approvals
 
-Users can specify on their Kubernetes manifests or Helm charts how many approvals do they have to collect before a resource gets updated. Approvals can be collected through the web admin dashboard, HTTP API, Slack and HipChat. 
+Users can specify on their Kubernetes manifests or Helm charts how many approvals do they have to collect before a resource gets updated. Approvals can be collected through the web admin dashboard, HTTP API, Slack and HipChat. Read more about approvals [in the docs](/docs/#approvals).
+
+## Keel Friends
+
+* [Webhook Relay](https://webhookrelay.com) allows Keel to receive webhooks and connect to admin dashboard without configuring public IP/domains.
+* [Sunstone](https://about.sunstone.dev/) allows users to always deploy latest **semver** tags without continuously updating your docs and deployment yamls. 

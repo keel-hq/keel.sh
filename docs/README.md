@@ -163,6 +163,10 @@ INSECURE_REGISTRY="true"
 
 ### Enabling admin dashboard
 
+::: warning
+Follow [these instruction on how to enable admin UI](/docs/#enabling-admin-dashboard). Admin dashboard hasn't been fully released yet, it's only available through the `latest` tag or if you compile Keel from the `master` branch. 
+:::
+
 To enable admin dashboard, you will need to:
 
 1. Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD environment variables
@@ -202,7 +206,6 @@ Available policies:
 -  **glob**: use wildcards to match versions, example:
 
 ```yaml
----
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata: 
@@ -217,7 +220,6 @@ metadata:
 - **regexp**: use regular expressions to match versions, example:
 
 ```yaml
----
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata: 
@@ -397,8 +399,9 @@ spec:
 
 While the deployment above works perfect for both webhook and Google Cloud Pubsub triggers sometimes you can't control these events and the only available solution is to check registry yourself. This is where polling trigger comes to the rescue.
 
-> **Note**: when image with non-semver style tag is supplied (ie: `latest`) Keel will monitor SHA digest. If tag is semver - it will track and notify providers when new versions are available.
-
+::: warning
+**Note**: when image with non-semver style tag is supplied (ie: `latest`) Keel will monitor SHA digest. If tag is semver - it will track and notify providers when new versions are available.
+:::
 
 Add labels:
 
@@ -409,7 +412,9 @@ keel.sh/trigger=poll
 
 To specify custom polling schedule, use *keel.sh/pollSchedule: "@every 10m"* annotation. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". 
 
-> **Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
+::: tip
+**Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
+:::
 
 Example deployment file for polling:
 
@@ -540,9 +545,9 @@ If you are not using versioning and pushing to the same tag, you should modify y
 Current consensus on a best way to "force" update Helm releases is by modifying your pod spec template by adding:
 
 
+```yaml
+date/deploy-date: {{ now | quote }}
 ```
-date/deploy-date: &lbrace;&lbrace; now | quote &rbrace;&rbrace;
-``
 
 annotation. This way Helm's Tiller will always detect a change in your template and Kubernetes will start a rolling update on the resource.
 
@@ -551,7 +556,9 @@ annotation. This way Helm's Tiller will always detect a change in your template 
 
 This example demonstrates Keel configuration for polling.
 
-> **Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
+::: tip
+**Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
+:::
 
 ```yaml
 replicaCount: 1
@@ -606,7 +613,7 @@ Webhooks are "user-defined HTTP callbacks". They are usually triggered by some e
 }
 ```
 
-> Keel by default runs HTTP server on port 9300. Create a service and either expose it to the internet or use https://webhookrelay.com to receive webhooks.
+> Keel by default runs HTTP server on port 9300. Create a service and either expose it to the internet or use [https://webhookrelay.com](https://webhookrelay.com) to receive webhooks.
 
 ### DockerHub Webhooks
 
