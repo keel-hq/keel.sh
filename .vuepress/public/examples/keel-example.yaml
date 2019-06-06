@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+  name: pushwf  
+  labels: 
+    name: "pushwf"
+spec:
+  replicas: 1
+  revisionHistoryLimit: 5
+  selector:
+    matchLabels:
+      app: pushwf
+  template:
+    metadata:
+      name: pushwf
+      labels:
+        app: pushwf
+    spec:     
+      containers:                    
+        - image: keelhq/push-workflow-example:{{ .version | latestRegistrySemver "keelhq/push-workflow-example" }}
+          imagePullPolicy: Always
+          name: pushwf
+          ports:
+            - containerPort: {{ .port | default 8500 }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: {{ .port | default 8500 }}
+            initialDelaySeconds: 10
+            timeoutSeconds: 5    
