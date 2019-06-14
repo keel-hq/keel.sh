@@ -582,6 +582,35 @@ keel:
       tag: image.tag  # [2]
 ```
 
+#### Helm polling private registry
+
+If you are polling a private repository, you can set secret name for an image to use for authentication:
+
+```yaml
+replicaCount: 1
+image:
+  repository: karolisr/webhook-demo
+  tag: "0.0.8"
+  pullPolicy: IfNotPresent
+service:
+  name: webhookdemo
+  type: ClusterIP
+  externalPort: 8090
+  internalPort: 8090
+
+keel:
+  # keel policy (all/major/minor/patch/force)
+  policy: all
+  # trigger type, defaults to events such as pubsub, webhooks
+  trigger: poll
+  # polling schedule
+  pollSchedule: "@every 2m"
+  # images to track and update
+  images:
+    - repository: image.repository
+      tag: image.tag  
+      imagePullSecret: my-secret-name
+```
 
 ## Triggers
 
