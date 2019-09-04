@@ -789,13 +789,50 @@ spec:
 
 If you are using polling trigger with Amazon ECR registry, Keel deployment requires several environment variables:
 
-```
+```shell
 AWS_ACCESS_KEY_ID=AKIA.........
 AWS_SECRET_ACCESS_KEY=3v..............
 AWS_REGION=us-east-2 # <- where your registry is
 ```
 
-Documentation on setting up credentials can be found here: https://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/set-up-creds.html.
+Documentation on setting up credentials can be found here: [https://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/set-up-creds.html](https://docs.aws.amazon.com/amazonswf/latest/awsrbflowguide/set-up-creds.html).
+
+#### IAM Role
+
+You can also take advantage of the `iam-role` without using explicit keys in the environmental variables. You can attach the following policy to your role
+
+```json
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "ec2:*"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+```
+
+In your `Keel` deployment file, you simply need to add the specific annotation to use your role. For example, if you ise `kube2iam` you should add the following:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keel
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        iam.amazonaws.com/role: arn:aws:iam::1234567890:role/my-role
+```
+
+If you use the Helm Chart to deploy Keel, you just need to add the annotation under the `podAnnotations` object in the `values.yml`.
 
 #### Intervals
 
@@ -806,7 +843,6 @@ You may also schedule a job to execute at fixed intervals. This is supported by 
 where _duration_ is a string accepted by [time.ParseDuration](http://golang.org/pkg/time/#ParseDuration).
 
 For example, _@every 1h30m10s_ would indicate a schedule that activates every 1 hour, 30 minutes, 10 seconds.
-
 
 > **Tip**: If you want to disable polling support for your Keel installation - set environment variable
 __POLL=0__.
