@@ -24,9 +24,10 @@ Once a workflow is ready, any push to the master branch (or merge requests from 
 In this tutorial we will use:
 
 * [Minikube](https://github.com/kubernetes/minikube#what-is-minikube) - our local development Kubernetes environment. Mac users are free to use Docker for Mac with Kubernetes support, works fine!
-* GitHub - we will store our code here
+* [Helm](https://helm.sh/docs/intro/install/) - Kubernetes package manager
+* [GitHub](https://github.com/) - we will store our code here
 * DockerHub - our Docker images will be built and stored here
-* Webhook Relay - will relay public webhooks to our internal Kubernetes environment so we don't have to expose Keel to the public internet
+* [Webhook Relay](https://webhookrelay.com) - will relay public webhooks to our internal Kubernetes environment so we don't have to expose Keel to the public internet
 
 ### Set up GitHub repository
 
@@ -64,22 +65,103 @@ git commit -m "first"
 git push origin master
 ```
 
-### Configure Webhook Relay forwarding
+### Create Kubernetes namespace
 
-In this step we will configure Webhook Relay to forward DockerHub webhooks our internal Kubernetes environment. This is especially useful when developing on a local Kubernetes cluster as receiving webhooks from public services can be slightly more complicated.
-
-Let's prepare configuration:
+To keep things isolated, create a new Kubernetes namespace:
 
 ```bash
-# using localhost as a webhookrelayd agent will be running as a sidecar
-# webhookrelayd sidecar for keel comes with preconfigured bucket name 'dockerhub'
-$ relay forward -b dockerhub --no-agent http://localhost:9300/v1/webhooks/dockerhub
-Forwarding configuration created: 
-https://my.webhookrelay.com/v1/webhooks/b968afa1-b737-4385-bc0f-473dbc2007b4 -> http://localhost:9300
-In order to start receiving webhooks - start an agent: 'relay forward' 
+kubectl create namespace push-workflow
 ```
 
-We will need that long URL for our next step when configuring DockerHub webhooks.
+From here, we will use namespace called 'push-workflow'. You can choose any other name, just update following commands to target your namespace.
+
+It's also handy to set this namespace as your current context:
+
+```bash
+kubectl config set-context $(kubectl config current-context) --namespace=push-workflow
+```
+
+### Enable Webhook Relay forwarding
+
+Webhook Relay operator will create a public endpoint and destination where to forward webhooks. Let's install it:
+
+```bash
+helm repo add webhookrelay https://charts.webhookrelay.com
+helm repo update
+```
+
+Get access token from [here](https://my.webhookrelay.com/tokens). Once you click on 'Create Token', it will generate it and show a helper to set environment variables:
+
+```
+export RELAY_KEY=*****-****-****-****-*********
+export RELAY_SECRET=**********
+```
+
+Install through Helm:
+
+```bash
+helm upgrade --install webhookrelay-operator --namespace=push-workflow webhookrelay/webhookrelay-operator \
+  --set credentials.key=$RELAY_KEY --set credentials.secret=$RELAY_SECRET
+```
+
+To view installed application:
+
+```bash
+helm list
+NAME                 	NAMESPACE    	REVISION	UPDATED                                	STATUS  	CHART                      	APP VERSION
+webhookrelay-operator	push-workflow	1       	2020-06-21 15:39:32.978269521 +0100 BST	deployed	webhookrelay-operator-0.1.3	1.16.0     
+```
+
+Once operator is deployed, you can create a simple CR (Custom Resource, located in the **push-workflow-example** repository) that will let you receive and forward webhooks:
+
+```yaml
+# webhookrelay_cr.yaml
+apiVersion: forward.webhookrelay.com/v1
+kind: WebhookRelayForward
+metadata:
+  name: keel-forward
+spec:
+  buckets:
+  - name: dockerhub-to-keel
+    inputs:
+    - name: dockerhub-endpoint
+      description: "Public endpoint"
+      responseBody: "OK"
+      responseStatusCode: 200
+    outputs:
+    - name: keel
+      destination: http://keel:9300/v1/webhooks/dockerhub
+
+```
+
+```bash
+kubectl apply -f webhookrelay_cr.yaml
+```
+
+You should see two pods running now:
+
+```bash
+$ kubectl get pods
+NAME                                           READY   STATUS    RESTARTS   AGE
+keel-forward-whr-deployment-869c4d4c86-txptt   1/1     Running   0          17s
+webhookrelay-operator-74984df6d8-l475z         1/1     Running   0          9m31s
+```
+
+If you use `kubectl describe` command on the created CRD, you should be able to see your public endpoint (you can also view it if you go to your [buckets page](https://my.webhookrelay.com/buckets)): 
+
+```bash
+$ kubectl describe webhookrelayforwards.forward.webhookrelay.com keel-forward
+...
+...
+Status:
+  Agent Status:  Running
+  Public Endpoints:
+    https://gz66jjp2wvfczfsjhoxutk.hooks.webhookrelay.com
+  Ready:           true
+  Routing Status:  Configured
+```
+
+Grab that ***.hooks.webhookrelay.com URL, we will need it in the next step.
 
 ### Configure DockerHub (code repository + webhook)
 
@@ -96,55 +178,23 @@ Ensure that `autobuild` is switched on and click on "Save and Build". You will g
 
 ![configure automated builds](/img/examples/docker-build-config.png)
 
-Also, we will need to setup DockerHub webhooks to Keel via Webhook Relay. For some reason, that configuration is not available on https://cloud.docker.com and we have to go to https://hub.docker.com:
+Also, we will need to setup DockerHub webhooks to Keel via Webhook Relay. To configure webhooks, go to https://hub.docker.com:
 
 ![dockerhub webhooks](/img/examples/dockerhub-webhook.png)
 
-### Deploy Keel and your app
-
-First, we need to deploy Keel with Webhook Relay sidecar. This is a one-off thing after which when you add more applications to your Kubernetes environment you don't need to repeat this step.
-
-### Credentials for webhookrelayd sidecar 
-
-Webhook Relay daemon will need authentication details to connect. We can use `relay` CLI to configure and insert secret into our Kubernetes environment: 
-
-```bash
-# we need to create a namespace first for the secret
-$ push-workflow-example git:(master) kubectl create namespace keel
-namespace "keel" created
-# by default Keel is deployed in namespace 'keel', therefore we need secret there
-$ push-workflow-example git:(master) relay ingress secret --name webhookrelay-credentials --namespace keel
-secret "webhookrelay-credentials" created
-```
+<!-- ### Deploy Keel and your app -->
 
 ### Deploying Keel
 
-now, if your cluster has RBAC enabled, use this template (if you are using Minikube then by default it should be enabled):
-
 ```bash
-kubectl create -f https://raw.githubusercontent.com/keel-hq/keel/master/deployment/deployment-rbac-whr-sidecar.yaml
+helm repo add keel https://charts.keel.sh
+helm repo update
 ```
 
-and if there's no RBAC in your cluster, use:
+And install it (we are disabling Keel's helm provider here as we are only going to work with Kubernetes manifests):
 
 ```bash
-kubectl create -f https://raw.githubusercontent.com/keel-hq/keel/master/deployment/deployment-norbac-whr-sidecar.yaml
-```
-
-> TIP: Feel free to save deployment manifest locally and add things like Slack or other chat provider notifications, approvals and so on. For the sake of simplicity we are omitting those steps in this tutorial.
-
-So, when we create it Kubernetes should complain a bit about already existing namespace but that's expected:
-
-```bash
-$ kubectl create -f https://raw.githubusercontent.com/keel-hq/keel/master/deployment/deployment-rbac-whr-sidecar.yaml
-serviceaccount "keel" created
-clusterrolebinding.rbac.authorization.k8s.io "keel-clusterrole-binding" created
-clusterrole.rbac.authorization.k8s.io "keel-clusterrole" created
-deployment.extensions "keel" created
-Error from server (AlreadyExists): error when creating "https://raw.githubusercontent.com/keel-hq/keel/master/deployment/deployment-rbac-whr-sidecar.yaml": namespaces "keel" already exists
-$ kubectl get pods -n keel
-NAME                   READY     STATUS    RESTARTS   AGE
-keel-f8b5959cc-jrgcd   2/2       Running   0          8s
+helm upgrade --install keel --namespace=push-workflow keel/keel --set helmProvider.enabled="false" --set service.enabled="true" --set service.type="ClusterIP"
 ```
 
 ### Deploy your app

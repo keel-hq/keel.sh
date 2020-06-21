@@ -78,7 +78,7 @@ Prerequisites:
 You need to add this Chart repo to Helm:
 
 ```bash
-helm repo add keel-charts https://charts.keel.sh 
+helm repo add keel https://charts.keel.sh 
 helm repo update
 ```
 
@@ -87,7 +87,7 @@ Install through Helm (with Helm provider enabled by default):
 > Keel must be installed into the same namespace as Tiller, typically <code>kube-system</code>
 
 ```
-helm upgrade --install keel --namespace=kube-system keel-charts/keel
+helm upgrade --install keel --namespace=kube-system keel/keel
 ```
 
 If you work mostly with regular Kubernetes manifests, you can install Keel without Helm provider support:
