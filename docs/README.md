@@ -624,6 +624,7 @@ Available triggers:
   * Quay Webhooks
   * Harbor webhooks
   * Gitlab webhooks
+  * Github Webhooks
   * Receiving webhooks without public endpoint
 - Google Cloud GCR registry
 - Polling
@@ -668,6 +669,10 @@ Keel supports https://github.com/goharbor/harbor webhooks. Harbor webhooks shoul
 ### Gitlab webhooks
 
 Keel supports Gitlab registry notifications also known as webhooks (https://docs.gitlab.com/ee/administration/container_registry.html#configure-container-registry-notifications). Gitlab webhooks should be delivered to `/v1/webhooks/registry` endpoint. Gitlab webhooks are based on [Docker registry notifications](https://docs.docker.com/registry/notifications/).
+
+### Github Webhooks
+
+Keel supports Github packages (https://github.com/features/packages). Github webhooks should be delivered to `/v1/webhooks/github` endpoint. In the Repository -> Setting -> Webhooks menu, set `Content Type: application/json`, and select Event `Registry packages`.
 
 ### Receiving webhooks without public endpoint
 
