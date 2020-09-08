@@ -1013,7 +1013,7 @@ You can also view pending/rejected/approved update request on `/v1/approvals` Ke
 
 ## Notifications
 
-Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat messages.
+Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat, Mattermost, Teams messages.
 
 Notification types:
 
@@ -1150,6 +1150,11 @@ That's it, Keel notifications for Mattermost enabled:
 ![Mattermost notification](/img/docs/mattermost-notification.png)
 
 > If you want to override bot's username, you can supply `MATTERMOST_USERNAME=somethingelse` environment variable.
+
+### Teams notifications
+MS Teams allows you to [set up a custom incoming webhook](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using#setting-up-a-custom-incoming-webhook).
+
+The process linked above results in a webhook url. Pass that to Kell via the TEAMS_WEBHOOK_URL variable.
 
 ### Notification levels
 
