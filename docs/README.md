@@ -1154,7 +1154,7 @@ That's it, Keel notifications for Mattermost enabled:
 ### Teams notifications
 MS Teams allows you to [set up a custom incoming webhook](https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/connectors-using#setting-up-a-custom-incoming-webhook).
 
-The process linked above results in a webhook url. Pass that to Kell via the `TEAMS_WEBHOOK_URL` variable.
+The process linked above results in a webhook url. Pass that to Keel via the `TEAMS_WEBHOOK_URL=https://the.webhook/provided/by/teams` environment variable.
 
 ### Notification levels
 
