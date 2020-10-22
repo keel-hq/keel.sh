@@ -251,11 +251,11 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: minor     # update policy (available: patch, minor, major, all, force)
       keel.sh/trigger: poll     # enable active repository checking (webhooks and GCR would still work)
       keel.sh/approvals: "1"    # required approvals to update
       keel.sh/match-tag: "true" # only makes a difference when used with 'force' policy, will only update if tag matches :dev->:dev, :prod->:prod 
-  annotations:
       keel.sh/pollSchedule: "@every 1m"
       keel.sh/notify: chan1,chan2  # chat channels to sent notification to
 spec:
@@ -299,7 +299,7 @@ While the goal is often the same, different providers can choose different updat
 
 Kubernetes provider was the first, simplest provider added to Keel. Policies and trigger configuration for each application deployment is done through labels. 
 
-Policies are specified through special label:
+Policies are specified through a special annotation:
 
 ```
 keel.sh/policy=all
@@ -323,6 +323,7 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: all
 spec:
   replicas: 1
@@ -364,6 +365,7 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: major    
 spec:
   replicas: 1
@@ -400,7 +402,7 @@ While the deployment above works perfect for both webhook and Google Cloud Pubsu
 **Note**: when image with non-semver style tag is supplied (ie: `latest`) Keel will monitor SHA digest. If tag is semver - it will track and notify providers when new versions are available.
 :::
 
-Add labels:
+Add annotations:
 
 ```
 keel.sh/policy=force # add this to enable updates of non-semver tags
@@ -423,9 +425,9 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: force
       keel.sh/trigger: poll      
-  annotations:
       keel.sh/pollSchedule: "@every 10m"
 spec:
   replicas: 1
@@ -465,9 +467,9 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: minor
       keel.sh/trigger: poll            
-  annotations:
       keel.sh/pollSchedule: "@every 1m"          
 spec:
   selector:
@@ -888,6 +890,7 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
+  annotations:
       keel.sh/policy: all
       keel.sh/trigger: poll      
       keel.sh/approvals: "1"
@@ -1067,8 +1070,8 @@ metadata:
   namespace: default
   labels: 
       name: "wd"
-      keel.sh/policy: minor
   annotations:
+      keel.sh/policy: minor
       keel.sh/releaseNotes: "https://github.com/keel-hq/keel/releases"
 ```
 

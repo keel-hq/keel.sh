@@ -208,6 +208,7 @@ metadata:
   name: pushwf  
   labels: 
     name: "pushwf"
+  annotations:
     # force policy will ensure that deployment is updated
     # even when tag is unchanged (latest remains)
     keel.sh/policy: force
@@ -366,7 +367,7 @@ spec:
 
 We need to add Keel policy for updates and optional trigger type.
 
-These settings have to be specified as labels:
+These settings have to be specified as annotations:
 
 ```
 keel.sh/policy: major
