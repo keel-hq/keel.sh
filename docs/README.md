@@ -131,8 +131,11 @@ AWS_ACCESS_KEY_ID=<access key ID>
 AWS_SECRET_ACCESS_KEY=<access key>
 AWS_REGION=<region>
 
-# Enable outgoing webhooks
+# Enable generic outgoing webhooks
 WEBHOOK_ENDPOINT=<https://your-endpoint>
+
+# Enable outgoing Teams webhook URL
+TEAMS_WEBHOOK_URL=<https://the.webhook/provided/by/teams>
 
 # Enable mattermost endpoint
 MATTERMOST_ENDPOINT=<mattermost incoming webhook endpoint>
