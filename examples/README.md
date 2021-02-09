@@ -131,6 +131,7 @@ spec:
     outputs:
     - name: keel
       destination: http://keel:9300/v1/webhooks/dockerhub
+      internal: true
 
 ```
 
