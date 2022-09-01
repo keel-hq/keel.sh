@@ -71,7 +71,7 @@ Available policies:
 -  **major**: update major & minor & patch versions
 -  **minor**: update only minor & patch versions (ignores major)
 -  **patch**: update only patch versions (ignores minor and major versions)
--  **force**: force update even if tag is not semver, ie: `latest`, optional label: **keel.sh/match-tag=true** which will enforce that only the same tag will trigger force update.
+-  **force**: force update even if tag is not semver, ie: `latest`, optional annotation: **keel.sh/match-tag="true"** which will enforce that only the same tag will trigger force update.
 -  **glob**: use wildcards to match versions, example:
 
 Policy configuration docs can be [viewed here](/docs/#policies).
