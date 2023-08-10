@@ -1159,6 +1159,11 @@ MS Teams allows you to [set up a custom incoming webhook](https://docs.microsoft
 
 The process linked above results in a webhook url. Pass that to Keel via the `TEAMS_WEBHOOK_URL=https://the.webhook/provided/by/teams` environment variable.
 
+### Discord notifications
+Discord allows you to [set up incoming webhooks in a channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
+
+Configure notifications by setting the `DISCORD_WEBHOOK_URL=https://the.webhook/provided/by/discord` environment variable.
+
 ### Notification levels
 
 Set notification levels via `NOTIFICATION_LEVEL` environment variable. Available levels: debug, info, success, warn, error, fatal. This setting defaults to `info`.
