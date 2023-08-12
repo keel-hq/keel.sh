@@ -257,7 +257,8 @@ metadata:
       keel.sh/approvals: "1"    # required approvals to update
       keel.sh/match-tag: "true" # only makes a difference when used with 'force' policy, will only update if tag matches :dev->:dev, :prod->:prod 
       keel.sh/pollSchedule: "@every 1m"
-      keel.sh/notify: chan1,chan2  # chat channels to sent notification to
+      keel.sh/notify: chan1,chan2    # chat channels to send notification to
+      keel.sh/initContainers: "true" # track init containers (disabled by default)
 spec:
   selector:
     matchLabels:
