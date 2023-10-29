@@ -16,7 +16,6 @@ module.exports = {
       {
         text: 'External',
         items: [
-          { text: 'Templating', link: 'https://about.sunstone.dev' },
           { text: 'Webhooks & Tunneling', link: 'https://webhookrelay.com' }
         ]
       }     
