@@ -312,7 +312,7 @@ A policy to update only minor releases:
 keel.sh/policy=minor
 ```
 
-### Kubernetes example
+### Deployment example
 
 Here is an example application `deployment.yaml` where we instruct Keel to update container image whenever there is a new version:
 
