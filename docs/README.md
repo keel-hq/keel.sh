@@ -134,6 +134,9 @@ AWS_REGION=<region>
 # Enable outgoing webhooks
 WEBHOOK_ENDPOINT=<https://your-endpoint>
 
+# Enable ntfy Notifications
+NTFY_WEBHOOK_URL=<https://your-endpoint>
+
 # Enable mattermost endpoint
 MATTERMOST_ENDPOINT=<mattermost incoming webhook endpoint>
 
@@ -1164,6 +1167,11 @@ The process linked above results in a webhook url. Pass that to Keel via the `TE
 Discord allows you to [set up incoming webhooks in a channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 Configure notifications by setting the `DISCORD_WEBHOOK_URL=https://the.webhook/provided/by/discord` environment variable.
+
+### ntfy notifications
+ntfy [lets you send push notifications](https://docs.ntfy.sh/) to your phone or desktop via scripts from any computer, using simple HTTP PUT or POST requests.
+
+Configure notifications by setting the `NTFY_WEBHOOK_URL=https://the.ntfy.instance/your-topic` environment variable.
 
 ### Notification levels
 
