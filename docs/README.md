@@ -138,7 +138,8 @@ WEBHOOK_ENDPOINT=<https://your-endpoint>
 MATTERMOST_ENDPOINT=<mattermost incoming webhook endpoint>
 
 # Slack configuration
-SLACK_TOKEN
+SLACK_BOT_TOKEN=<the bot token>
+SLACK_APP_TOKEN=<the application level token>
 
 SLACK_CHANNELS=<slack channel, defaults to "general">
 SLACK_APPROVALS_CHANNEL=<slack approvals channel, defaults to "general">
@@ -862,20 +863,21 @@ Users can specify on deployments and Helm charts how many approvals do they have
 
 * __non-blocking__ - multiple deployments/helm releases can be queued for approvals, the ones without specified approvals will be auto updated.
 * __extensible__ - current implementation focuses on Slack but additional approval collection mechanisms are trivial to implement.
-* __out of the box Slack integration__ - the only needed Keel configuration is Slack auth token, Keel will start requesting approvals and users will be able to approve.
+* __out of the box Slack integration__ - the only needed Keel configuration is Slack tokens, Keel will start requesting approvals and users will be able to approve.
 * __stateful__ - uses SQLite for persistence so even after updating itself (restarting) it will retain existing info.
 * __self cleaning__ - expired approvals will be removed after deadline is exceeded. 
 
 ### Enabling approvals
 
 Approvals are enabled by default but currently there is only one way to approve/reject updates:
-Slack - commands like:
+Slack - bot mentions like:
 
-* `keel get approvals` - get all pending/approved/rejected approvals
-* `keel approve <identifier>` - approve specified request.
-* `keel reject <identifier>` - reject specified request.
+* `@keel get approvals` - get all pending/approved/rejected approvals
+* `@keel approve <identifier>` - approve specified request.
+* `@keel reject <identifier>` - reject specified request.
 
-Make sure you have set `export SLACK_TOKEN=<your slack token here>` environment variable for Keel deployment.
+Make sure you have set `export SLACK_BOT_TOKEN=<your slack bot token here>` and
+`export SLACK_APP_TOKEN=<your slack app tooken here>`environment variable for Keel deployment.
 
 If you wish to specify a special channel for approval requests, supply `SLACK_APPROVALS_CHANNEL=<approvals channel name>` environment variable and then invite Keel bot to that channel.
 
@@ -930,33 +932,100 @@ keel:
       tag: image.tag
 ```
 
-### Configuring approvals with Slack
+
+### Configuring Slack
 
 Slack configuration can be sometimes quite confusing. If something has changed, please create an issue.
 
-#### Step 1: adding bot app and getting token
+#### Step 1: creating an application (bot)
 
-Go to your Slack apps page: https://[your-slack-community].slack.com/apps/A0F7YS25R-bots?page=1
+Visit https://api.slack.com/apps and create a new application from a manifest file and copy/paste the following manifest:
 
-![Slack bots](/img/docs/slack-bots.png)
+````json
+{
+    "display_information": {
+        "name": "keel"
+    },
+    "features": {
+        "bot_user": {
+            "display_name": "keel",
+            "always_online": false
+        }
+    },
+    "oauth_config": {
+        "scopes": {
+            "bot": [
+                "app_mentions:read",
+                "channels:read",
+                "chat:write",
+                "users:read",
+                "channels:history"
+            ]
+        }
+    },
+    "settings": {
+        "event_subscriptions": {
+            "bot_events": [
+                "app_mention"
+            ]
+        },
+        "interactivity": {
+            "is_enabled": true
+        },
+        "org_deploy_enabled": false,
+        "socket_mode_enabled": true,
+        "token_rotation_enabled": false
+    }
+}
+````
 
-Set name to Keel
+Bot scopes explanation
+ - `app_mentions:read` - allows the bot to read messages that mention the bot
+ - `channels:read` - allows the bot to list the available channels on which the bot is invited into. This is used to retrieve the channel identifier from the approval channel name.
+ - `chat:write` - allows the bot to write to the channel it is invited to.
+ - `users:read` - allows the bot to read user information, this is needed to retrieve the bot identifier from the bot name and ensure that we found the bot.
+ - `channels:history` - allows the bot to read the channel history. This is used to retrieve and update an approval message with the latest information. 
 
-![Slack bot name](/img/docs/slack-bot-name.png)
+Note: The needed scopes may vary depending on the channel type. (private or public). For private channel, the scope `groups:<action>` should be used instead.
 
+#### Step 2: Install the app
 
-#### Step 2: supplying token to Keel
+Once the application created, it can be installed on the wanted workspace.
 
-Use provided token as an environment variable in Keel's deployment:
+This can be done under `Settings > Install App` menu.
 
-`SLACK_TOKEN=token`
+#### Step 3: Invite the bot
+
+The bot must be invited into all channels (the channel given in the __SLACK_APPROVALS_CHANNEL__ and all channels given in __SLACK_CHANNELS__).
+
+This can be done directly in slack, by mentioning the bot into a channel.
+
+#### Step 4: Supplying bot token to Keel
+
+A *bot* token was automatically created since the step 1 with the scopes from the manifest file. The token can be seen under the `Features > OAuth & Permissions` menu of the application settings page.
+
+This token can be used as value for the __SLACK_BOT_TOKEN__ environment variable.
+
+#### Step 5: Create an App level token
+
+Unlike the bot token, the application level token is not generated automatically.
+
+In the application settings, under the `Basic Information` menu, go to the `App-Level Tokens` settings and generate a new scoped token.
+
+The token must define the following scopes:
+- `authorizations:read`
+- `connections:write`
+
+The token can be used as value for the __SLACK_APP_TOKEN__ environment variable.
+
+Congratulations! Your slack bot is configured.
 
 ### Approving through Slack example
 
 Keel will send notifications to your Slack group about pending approvals. Approval process is as simple as replying to Keel:
 
-- Approve: `keel approve default/whr:0.4.12`
-- Reject it: `keel reject default/whr:0.4.12`
+- Approve: `@keel approve default/whr:0.4.12`
+- Reject it: `@keel reject default/whr:0.4.12`
 
 Example conversation:
 
@@ -1114,7 +1183,11 @@ Webhook payload sample:
 
 ![Slack notifications](/img/docs/slack-notifications.png)
 
-First, get a Slack token, info about that can be found in the [docs](https://get.slack.help/hc/en-us/articles/215770388-Create-and-regenerate-API-tokens). Then, provide token via __SLACK_TOKEN__ environment variable. You should also provide __SLACK_CHANNELS__ environment variable with a comma separated list of channels where these notifications should be delivered to.
+First slack must be configured, see [Configuring Slack](#configuring-slack)
+
+You should also provide __SLACK_CHANNELS__ environment variable with a comma separated list of channels where these notifications should be delivered to.
+
+Note that the bot must be invited into all channels provided to that environment variable.
 
 Keel will be sending messages when deployment updates succeed or fail.
 
