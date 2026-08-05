@@ -161,6 +161,9 @@ INSECURE_REGISTRY="true"
 
 ### Enabling admin dashboard
 
+To protect the Admin UI with your existing OAuth or OIDC provider instead of
+Keel Basic Auth, follow the [external authentication proxy guide](./external-auth-proxy.html).
+
 ::: warning
 Follow [these instruction on how to enable admin UI](/docs/#enabling-admin-dashboard). Admin dashboard hasn't been fully released yet, it's only available through the `latest` tag or if you compile Keel from the `master` branch. 
 :::

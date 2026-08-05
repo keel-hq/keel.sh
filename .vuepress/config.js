@@ -12,6 +12,7 @@ module.exports = {
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Guide', link: '/docs/' },
+      { text: 'OAuth Proxy', link: '/docs/external-auth-proxy.html' },
       { text: 'Examples', link: '/examples/' },     
       {
         text: 'External',
@@ -42,4 +43,3 @@ module.exports = {
     ]  
   ] 
 }
-
