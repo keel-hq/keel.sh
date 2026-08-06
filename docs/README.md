@@ -137,6 +137,10 @@ WEBHOOK_ENDPOINT=<https://your-endpoint>
 # Enable mattermost endpoint
 MATTERMOST_ENDPOINT=<mattermost incoming webhook endpoint>
 
+# Enable shoutrrr notifications (ntfy, Gotify, Telegram, Matrix, Pushover, OpsGenie, PagerDuty and more)
+SHOUTRRR_URLS=<whitespace separated shoutrrr service URLs>
+SHOUTRRR_TIMEOUT=<per service send timeout, defaults to "10s">
+
 # Slack configuration
 SLACK_BOT_TOKEN=<the bot token>
 SLACK_APP_TOKEN=<the application level token>
@@ -1089,7 +1093,7 @@ You can also view pending/rejected/approved update request on `/v1/approvals` Ke
 
 ## Notifications
 
-Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat, Mattermost, Teams messages.
+Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat, Mattermost, Teams messages. Anything else (ntfy, Gotify, Telegram, Matrix, Pushover, OpsGenie, PagerDuty and more) is covered by [Shoutrrr notifications](#shoutrrr-notifications).
 
 Notification types:
 
@@ -1240,6 +1244,111 @@ The process linked above results in a webhook url. Pass that to Keel via the `TE
 Discord allows you to [set up incoming webhooks in a channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 Configure notifications by setting the `DISCORD_WEBHOOK_URL=https://the.webhook/provided/by/discord` environment variable.
+
+### Shoutrrr notifications
+
+[Shoutrrr](https://github.com/nicholas-fedor/shoutrrr) reaches a large number of notification services through a single URL format. This is the way to notify a service that Keel has no dedicated sender for.
+
+Supported services include ntfy, Gotify, Telegram, Matrix, Pushover, Pushbullet, Bark, Join, OpsGenie, PagerDuty, Signal, Twilio, Rocket.Chat, Zulip, Lark, WeCom, Notifiarr, Google Chat, MQTT, IFTTT, SMTP and a `generic` webhook, as well as Slack, Discord, Teams and Mattermost. The [shoutrrr services documentation](https://shoutrrr.nickfedor.com/latest/services/overview/) has the URL format for each one.
+
+::: tip
+Keel's dedicated Slack, Discord, Teams, Mattermost and mail senders keep working and remain the better choice for those services, because they build service specific payloads (Discord embeds, for example) that Shoutrrr's generic message format cannot express. You can run both at the same time.
+:::
+
+Enable it by setting the `SHOUTRRR_URLS` environment variable to one or more service URLs:
+
+```bash
+SHOUTRRR_URLS="ntfy://ntfy.sh/my-keel-topic"
+```
+
+Several destinations are separated by **whitespace or newlines, not commas**. Shoutrrr encodes list properties inside the URL query using commas, so a comma is part of a URL rather than a separator between two of them:
+
+```bash
+SHOUTRRR_URLS="ntfy://ntfy.sh/my-keel-topic telegram://110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw@telegram?chats=111,222"
+```
+
+An optional `SHOUTRRR_TIMEOUT` sets the per service send timeout as a [Go duration](https://pkg.go.dev/time#ParseDuration), defaulting to `10s`.
+
+#### Service URL examples
+
+| Service | URL |
+| --- | --- |
+| ntfy | `ntfy://ntfy.sh/my-keel-topic` |
+| ntfy (self hosted, authenticated) | `ntfy://username:password@ntfy.example.com/my-keel-topic` |
+| Gotify | `gotify://gotify.example.com/AzyoeNS.D-A_yolo` |
+| Telegram | `telegram://110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw@telegram?chats=@keel_channel` |
+| Pushover | `pushover://shoutrrr:apiToken@userKey` |
+| Matrix | `matrix://user:token@matrix.example.com?rooms=%23keel:matrix.example.com` |
+| OpsGenie | `opsgenie://api.opsgenie.com/eb243592-faa2-4ba2-a551-1afdf565c889` |
+| PagerDuty | `pagerduty://events.pagerduty.com/eb243592faa24ba2a5511afdf565c889?severity=critical` |
+| Generic webhook | `generic://example.com/api/v1/notify?@Authorization=Bearer%20token123` |
+| SMTP | `smtp://user:password@smtp.example.com:587/?fromaddress=keel@example.com&toaddresses=ops@example.com` |
+
+A room alias such as `#keel:matrix.example.com` has to be written as `%23keel:matrix.example.com`, and any `@` prefixed query key on the `generic` service becomes an outgoing HTTP header.
+
+#### Kubernetes example
+
+Service URLs embed bot tokens and API keys, so keep them in a secret rather than in the deployment manifest:
+
+```bash
+kubectl -n keel create secret generic keel-shoutrrr \
+  --from-literal=SHOUTRRR_URLS="ntfy://ntfy.sh/my-keel-topic gotify://gotify.example.com/AzyoeNS.D-A_yolo"
+```
+
+```yaml
+        env:
+          - name: SHOUTRRR_URLS
+            valueFrom:
+              secretKeyRef:
+                name: keel-shoutrrr
+                key: SHOUTRRR_URLS
+          # optional, defaults to 10s
+          - name: SHOUTRRR_TIMEOUT
+            value: "30s"
+```
+
+#### Helm example
+
+The chart stores the URLs in the Keel secret for you:
+
+```yaml
+shoutrrr:
+  enabled: true
+  urls:
+    - "ntfy://ntfy.sh/my-keel-topic"
+    - "telegram://110201543:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw@telegram?chats=111,222"
+  # optional, defaults to 10s
+  timeout: "30s"
+```
+
+`shoutrrr.urls` also accepts a plain pre-formatted string if you would rather supply the list from an existing value.
+
+#### What to expect
+
+The notification type and name become the title, and the message is followed by the event details. A successful deployment update arrives like this:
+
+```
+Title: deployment update: update resource
+
+Successfully updated deployment default/wd 0.0.9->0.0.10 (karolisr/webhook-demo:0.0.10)
+
+Resource: deployment
+Identifier: deployment/default/wd
+Level: success
+name: wd
+namespace: default
+provider: kubernetes
+```
+
+Details are rendered into the message body rather than passed as structured fields, because only a couple of shoutrrr services implement its rich sender interface and every other service silently discards fields. The Keel event level is also passed to shoutrrr as the message level, so services that support priorities (ntfy, Gotify, Pushover) can act on it.
+
+A few behaviours worth knowing:
+
+- **Credentials are kept out of the logs.** Keel never logs a service URL, only a redacted identifier of the form `scheme://host/***`. Send failures are reported by service scheme, for example `gotify`.
+- **Each URL is initialised independently.** A malformed URL, or one naming an unknown service, is logged (redacted) and ignored while the rest keep working. The sender is only disabled when no URL at all is usable.
+- **A notification counts as delivered once any service accepts it.** Keel retries a failed sender with a backoff, which would re-deliver to services that already received the message, so failure is only reported when every service failed. Individual failures are always logged.
+- **All notifications go to every configured URL.** Shoutrrr does not take part in the per-deployment channel overrides described below - use `NOTIFICATION_LEVEL` to control the volume.
+- Keel's `success` level has no shoutrrr equivalent and is sent as `Info`, and `fatal` is sent as `Error`.
 
 ### Notification levels
 
