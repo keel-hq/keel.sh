@@ -1089,7 +1089,7 @@ You can also view pending/rejected/approved update request on `/v1/approvals` Ke
 
 ## Notifications
 
-Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat, Mattermost, Teams messages.
+Keel can send notifications on successful or failed deployment updates.  There are several types of notifications - trusted webhooks or Slack, Hipchat, Mattermost, Teams messages. Services without a dedicated sender can be reached through [Shoutrrr](#shoutrrr-notifications).
 
 Notification types:
 
@@ -1240,6 +1240,41 @@ The process linked above results in a webhook url. Pass that to Keel via the `TE
 Discord allows you to [set up incoming webhooks in a channel](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
 Configure notifications by setting the `DISCORD_WEBHOOK_URL=https://the.webhook/provided/by/discord` environment variable.
+
+### Shoutrrr notifications
+
+[Shoutrrr](https://github.com/nicholas-fedor/shoutrrr) delivers notifications to a large number of services through a single URL format, and is the easiest way to reach a service that Keel has no dedicated sender for. Supported services include ntfy, Gotify, Telegram, Matrix, Pushover, Pushbullet, Bark, Join, OpsGenie, PagerDuty, Signal, Twilio, Rocket.Chat, Zulip, Lark, WeCom, Notifiarr, Google Chat, MQTT, IFTTT, SMTP and a `generic` webhook, as well as Slack, Discord, Teams and Mattermost.
+
+Enable it by setting `SHOUTRRR_URLS` to one or more service URLs, **separated by whitespace or newlines**:
+
+```
+SHOUTRRR_URLS=ntfy://ntfy.sh/my-keel-topic gotify://gotify.example.com/AzyoeNS.D-A_yolo
+```
+
+Commas are not separators, because shoutrrr uses them inside a URL for list properties such as `telegram://token@telegram?chats=111,222`.
+
+See the [shoutrrr services documentation](https://nicholas-fedor.github.io/shoutrrr/services/overview) for the URL format of each service.
+
+Optionally set `SHOUTRRR_TIMEOUT` to a [Go duration](https://pkg.go.dev/time#ParseDuration) to change the per-service send timeout, which defaults to `10s`.
+
+Behaviour worth knowing:
+
+- Each URL is initialised independently. If one URL is invalid, Keel logs it and keeps using the rest; Shoutrrr is only disabled when no URL is usable.
+- Service URLs contain credentials, so Keel never writes them to its logs. Failures are reported by service name (for example `gotify`) rather than by URL. For the same reason the Helm chart stores them in the Keel secret.
+- If a notification reaches at least one service, Keel treats it as delivered. Retrying because one target was down would re-deliver the message to every target that already received it.
+- Shoutrrr does not participate in the per-deployment channel overrides described below; every notification goes to every configured URL. Use `NOTIFICATION_LEVEL` to control the volume.
+
+With the Helm chart:
+
+```yaml
+shoutrrr:
+  enabled: true
+  urls:
+    - "ntfy://ntfy.sh/my-keel-topic"
+    - "telegram://token@telegram?chats=111,222"
+  # optional, defaults to 10s
+  timeout: "30s"
+```
 
 ### Notification levels
 
