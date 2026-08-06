@@ -204,6 +204,24 @@ Admin dashboard allows you to:
 * See audit logs (updates, approvals)
 * Last 30 days statistics
 
+### Tracked images
+
+The tracked images view lists every image Keel watches, together with the provider, namespace, policy and the trigger that keeps it up to date:
+
+![Keel tracked images](/img/docs/ui-tracked-images.png)
+
+### Approvals
+
+Updates for resources annotated with `keel.sh/approvals` wait here until they collect enough votes. You can approve or reject them directly from the dashboard:
+
+![Keel approvals](/img/docs/ui-approvals.png)
+
+### Audit logs
+
+Every update, approval and rejection is recorded with its metadata:
+
+![Keel audit logs](/img/docs/ui-audit-logs.png)
+
 ## Policies
 
 Use policies to define when you want your application to be updated. Providers can have different mechanisms of getting configuration for your application, but policies are consistent across all of them. Following [semver](http://semver.org/) 
