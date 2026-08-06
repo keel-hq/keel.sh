@@ -37,11 +37,19 @@ Keel doesn't need a database. Keel doesn't need persistent disk. It gets all req
 
 You can find sample deployments in https://github.com/keel-hq/keel repository under [deployments directory](https://github.com/keel-hq/keel/tree/master/deployment). You can either clone whole repository or just download that file. Edit settings (depending on your environment whether you want to use [Google Container Registry](https://cloud.google.com/container-registry/) PUBSUB) or notifications and create it. All configuration is done through environment variables.
 
-You can also use [sunstone.dev](https://about.sunstone.dev) to generate a template with latest semver version or use `latest` tag:
+If you don't want to maintain the manifests yourself, you can render them from the official Helm chart and pipe the result straight into `kubectl`. This doesn't create a Helm release, it only generates plain YAML:
 
-```
-# To override default latest semver tag, add &tag=x.x.x query argument to the URL below
-kubectl apply -f https://sunstone.dev/keel?namespace=keel&username=admin&password=admin&tag=latest
+```bash
+helm repo add keel https://keel-hq.github.io/keel/
+helm repo update
+
+# To pin a specific Keel version, add --set image.tag=x.x.x
+helm template keel keel/keel \
+  --namespace keel \
+  --set createNamespaceResource=true \
+  --set basicauth.enabled=true \
+  --set basicauth.user=admin \
+  --set basicauth.password=admin | kubectl apply -f -
 ```
 
 This command will deploy Keel to **keel** namespace with enabled basic authentication and admin dashboard.
@@ -177,13 +185,13 @@ To enable admin dashboard, you will need to:
 1. Set BASIC_AUTH_USER and BASIC_AUTH_PASSWORD environment variables
 2. Create a service so you can access it. Keel UI and API are accessible on port 9300 by default.
 
-To access Keel admin dashboard without configuring public IP, you can use [webhookrelay.com](https://webhookrelay.com) tunnels. There's a default template to generate Keel configuration with tunnels enabled. First get a [token](https://my.webhookrelay.com/tunnels) & [tunnel](https://my.webhookrelay.com/tunnels), then deploy through [sunstone.dev](https://about.sunstone.dev):
+To access Keel admin dashboard without configuring a public IP, forward the port to your machine:
 
 ```bash
-kubectl apply -f https://sunstone.dev/keel?namespace=default&username=admin&password=admin&relay_key=TOKEN_KEY&relay_secret=TOKEN_SECRET&relay_tunnel=TUNNEL_NAME&tag=latest
+kubectl -n keel port-forward deploy/keel 9300:9300
 ```
 
-Then, access it through the tunnel address such as your-subdomain.webrelay.io:
+The dashboard is then available on [http://localhost:9300](http://localhost:9300):
 
 ![Keel Web UI](/img/keel_ui.png)
 
