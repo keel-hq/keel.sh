@@ -701,7 +701,91 @@ Documentation on how to setup Azure webhooks is available here: https://docs.mic
 
 ### Harbor webhooks
 
-Keel supports https://github.com/goharbor/harbor webhooks. Harbor webhooks should be delivered to `/v1/webhooks/registry` endpoint. Harbor webhooks are based on [Docker registry notifications](https://docs.docker.com/registry/notifications/).
+Keel supports [Harbor](https://goharbor.io/) through both registry polling and
+native Harbor webhooks. Harbor implements the Docker Registry V2 API, so no
+Harbor-specific provider is required. Keep the Harbor project in the image
+path; for example, Keel treats
+`harbor.example.com/library/ai-rag:latest` as registry
+`harbor.example.com` and repository `library/ai-rag`.
+
+#### Polling Harbor
+
+Use a semantic-version policy (`all`, `major`, `minor`, or `patch`) when Harbor
+contains versioned tags. To redeploy when new content is pushed to a mutable tag
+such as `latest`, use `force` with tag matching. This makes Keel compare the
+tag's manifest digest instead of looking for a newer tag:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-rag
+  namespace: ai-rag
+  annotations:
+    keel.sh/policy: force
+    keel.sh/trigger: poll
+    keel.sh/matchTag: "true"
+    keel.sh/pollSchedule: "@every 5m"
+spec:
+  selector:
+    matchLabels:
+      app: ai-rag
+  template:
+    metadata:
+      labels:
+        app: ai-rag
+    spec:
+      containers:
+        - name: ai-rag
+          image: harbor.example.com/library/ai-rag:latest
+          imagePullPolicy: Always
+```
+
+`imagePullPolicy: Always` controls how the kubelet pulls an image after a
+rollout; it does not tell Keel to watch the tag. If `keel.sh/policy: all` is
+used and the repository only contains `latest`, Keel correctly produces no
+update event because `all` searches for a newer semantic-version tag.
+
+Public Harbor projects need no credentials. For a private project, create a
+Docker registry Secret in the workload namespace and reference it with the
+standard Kubernetes `imagePullSecrets` field:
+
+```bash
+kubectl create secret docker-registry harbor-registry \
+  --namespace ai-rag \
+  --docker-server harbor.example.com \
+  --docker-username "$HARBOR_USERNAME" \
+  --docker-password "$HARBOR_PASSWORD"
+```
+
+```yaml
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: harbor-registry
+```
+
+Keel uses the workload's pull secret when it queries Harbor. You can instead
+set the `keel.sh/imagePullSecret: harbor-registry` annotation on the workload.
+
+#### Harbor push webhooks
+
+Polling is optional when Harbor can reach the Keel service. In the Harbor
+project, create an HTTP webhook with:
+
+* event type **Artifact pushed** (`PUSH_ARTIFACT`);
+* payload format **Default** (not CloudEvents);
+* endpoint `https://keel.example.com/v1/webhooks/harbor`.
+
+The workload still needs an update policy. Use `force` for repeated pushes to
+the same tag, or a semantic-version policy for versioned tags. If Keel is
+configured with authenticated webhooks, also configure the matching Basic or
+Bearer authorization header in Harbor.
+
+Harbor installations using an internal certificate authority must make that CA
+trusted by the Keel container. As a less secure installation-wide fallback,
+setting `INSECURE_REGISTRY=true` disables registry TLS verification.
 
 ### Gitlab webhooks
 
