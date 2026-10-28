@@ -447,7 +447,7 @@ keel.sh/trigger=poll
 To specify custom polling schedule, use *keel.sh/pollSchedule: "@every 10m"* annotation. A duration string is a possibly signed sequence of decimal numbers, each with optional fraction and a unit suffix, such as "300ms", "1.5h" or "2h45m". Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h". 
 
 ::: tip
-**Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates
+**Note** that even if polling trigger is set - webhooks or pubsub events can still trigger updates. Combining both is a good safety net: registries deliver each event once with limited [webhook retries](https://webhookrelay.com/glossary/webhook-retries/), so polling catches any update whose webhook was missed.
 :::
 
 Example deployment file for polling:
@@ -668,7 +668,7 @@ Available triggers:
 
 ### Webhooks
 
-Webhooks are "user-defined HTTP callbacks". They are usually triggered by some event, such as pushing image to a registry. Native webhooks (simplified version) are accepted at `/v1/webhooks/native` endpoint with a payload that has __name__ and __tag__ fields: 
+Webhooks are "user-defined HTTP callbacks" (see this [webhook glossary](https://webhookrelay.com/glossary/) for the related terminology). They are usually triggered by some event, such as pushing image to a registry. Native webhooks (simplified version) are accepted at the `/v1/webhooks/native` [webhook endpoint](https://webhookrelay.com/glossary/webhook-endpoint/) with a payload that has __name__ and __tag__ fields: 
 
 ```json
 {
@@ -677,7 +677,7 @@ Webhooks are "user-defined HTTP callbacks". They are usually triggered by some e
 }
 ```
 
-> Keel by default runs HTTP server on port 9300. Create a service and either expose it to the internet or use [https://webhookrelay.com](https://webhookrelay.com) to receive webhooks.
+> Keel by default runs HTTP server on port 9300. Create a service and either expose it to the internet or use Webhook Relay [webhook forwarding](https://webhookrelay.com/webhook-gateway/) to receive webhooks without a public endpoint.
 
 ### DockerHub Webhooks
 
@@ -797,7 +797,7 @@ Keel supports Github packages (https://github.com/features/packages). Github web
 
 ### Receiving webhooks without public endpoint
 
-If you don't want to expose your Keel service - recommended solution is [https://webhookrelay.com/](https://webhookrelay.com/) which can deliver webhooks to your internal Keel service through a sidecar container.
+If you don't want to expose your Keel service - recommended solution is [Webhook Relay](https://webhookrelay.com/) which can deliver webhooks to your internal Keel service through a sidecar container. The agent opens an outbound connection, so no ingress, load balancer or open firewall port is needed; see how to [receive webhooks inside a private network](https://webhookrelay.com/docs/webhooks/internal/localhost/) and the [Kubernetes integration](https://webhookrelay.com/features/webhook-kubernetes-integration/) for details.
 
 Example sidecar container configuration for your `deployments.yaml`:
 
