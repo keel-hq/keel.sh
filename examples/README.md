@@ -83,7 +83,7 @@ kubectl config set-context $(kubectl config current-context) --namespace=push-wo
 
 ### Enable Webhook Relay forwarding
 
-Webhook Relay operator will create a public endpoint and destination where to forward webhooks. Let's install it:
+Webhook Relay operator will create a public endpoint and destination where to forward webhooks (this pattern is called [webhook forwarding](https://webhookrelay.com/glossary/webhook-forwarding/)). Let's install it:
 
 ```bash
 helm repo add webhookrelay https://charts.webhookrelay.com
@@ -182,6 +182,10 @@ Ensure that `autobuild` is switched on and click on "Save and Build". You will g
 Also, we will need to setup DockerHub webhooks to Keel via Webhook Relay. To configure webhooks, go to https://hub.docker.com:
 
 ![dockerhub webhooks](/img/examples/dockerhub-webhook.png)
+
+::: tip
+Want to see exactly what DockerHub sends before wiring it to Keel? Point the webhook at a free [Webhook Bin](https://webhookrelay.com/webhook-bin/) first to capture and inspect the payload.
+:::
 
 <!-- ### Deploy Keel and your app -->
 

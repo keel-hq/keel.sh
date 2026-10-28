@@ -82,4 +82,4 @@ Users can specify on their Kubernetes manifests or Helm charts how many approval
 
 ## Keel Friends
 
-* [Webhook Relay](https://webhookrelay.com) allows Keel to receive webhooks and connect to admin dashboard without configuring public IP/domains.
+* [Webhook Relay](https://webhookrelay.com) allows Keel to receive webhooks and connect to admin dashboard (via [tunnels to Kubernetes](https://webhookrelay.com/blog/tunnels-to-kubernetes/)) without configuring public IP/domains.
